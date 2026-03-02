@@ -108,6 +108,7 @@ def compute_iou(box1, box2):
 
 def evaluate_precision_recall(annotations, detections, iou_threshold=0.5):
     """Оценка precision/recall для одного порога.
+    Возвращает tuple (precision, recall, TP, FP, FN).
     annotations: dict image->list of gt boxes (dict)
     detections: dict image->list of det boxes (dict) как из анализатора
     """
@@ -136,7 +137,7 @@ def evaluate_precision_recall(annotations, detections, iou_threshold=0.5):
         FN += sum(1 for m in matched if not m)
     precision = TP / (TP + FP) if (TP + FP) > 0 else 0
     recall = TP / (TP + FN) if (TP + FN) > 0 else 0
-    return precision, recall
+    return precision, recall, TP, FP, FN
 
 
 def compute_metrics_for_thresholds(annotation_file="annotations.json"):
@@ -159,8 +160,9 @@ def compute_metrics_for_thresholds(annotation_file="annotations.json"):
             continue
         with open(json_file, 'r') as f:
             dets = json.load(f)
-        prec, rec = evaluate_precision_recall(ann, dets)
+        prec, rec, tp, fp, fn = evaluate_precision_recall(ann, dets)
         print(f"Порог {threshold:<4.1f}: precision={prec:.3f}, recall={rec:.3f}")
+        print(f"  TP={tp}, FP={fp}, FN={fn}  (ложных срабатываний={fp})")
 
 
 def list_sample_detections(threshold, num_samples=3):
